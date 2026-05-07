@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>A-Frame Animation + Audio Sequence</title>
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+
+  <a-scene shadow="enabled: false" light="defaultLightsEnabled:false" mindar-image="
+    imageTargetSrc: ./targets.mind;
+    uiScanning: no;
+    uiLoading: no;
+    uiError: no;
+  " color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights:false" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+    <a-assets>
+      <a-img id="target" src="./moons_stars_target.png" />
+      <a-img id="review" src="./review.png" />
+      <!-- MODELS -->
+      <a-asset-item id="m101" src="./glb/portal2.glb"></a-asset-item>
+      <a-asset-item id="m1" src="./glb/DIALOUGE_01.glb"></a-asset-item>
+      <a-asset-item id="m2" src="./glb/DIALOUGE_02.glb"></a-asset-item>
+      <a-asset-item id="m3" src="./glb/DIALOUGE_03.glb"></a-asset-item>
+      <a-asset-item id="m4" src="./glb/DIALOUGE_04.glb"></a-asset-item>
+      <a-asset-item id="m5" src="./glb/DIALOUGE_05.glb"></a-asset-item>
+      <a-asset-item id="m6" src="./glb/DIALOUGE_06.glb"></a-asset-item>
+      <a-asset-item id="m7" src="./glb/DIALOUGE_07.glb"></a-asset-item>
+      <a-asset-item id="m8" src="./glb/DIALOUGE_08.glb"></a-asset-item>
+      <a-asset-item id="m9" src="./glb/DIALOUGE_09.glb"></a-asset-item>
+      <a-asset-item id="m10" src="./glb/DIALOUGE_10.glb"></a-asset-item>
+      <a-asset-item id="m11" src="./glb/DIALOUGE_11.glb"></a-asset-item>
+      <a-asset-item id="m12" src="./glb/DIALOUGE_12.glb"></a-asset-item>
+      <a-asset-item id="m13" src="./glb/DIALOUGE_13.glb"></a-asset-item>
+      <a-asset-item id="m14" src="./glb/DIALOUGE_14.glb"></a-asset-item>
+
+      <!-- AUDIOS -->
+      <audio id="a1" src="./audios/01.mp3"></audio>
+      <audio id="a2" src="./audios/02.mp3"></audio>
+      <audio id="a3" src="./audios/03.mp3"></audio>
+      <audio id="a4" src="./audios/04.mp3"></audio>
+      <audio id="a5" src="./audios/05.mp3"></audio>
+      <audio id="a6" src="./audios/06.mp3"></audio>
+      <audio id="a7" src="./audios/07.mp3"></audio>
+      <audio id="a8" src="./audios/08.mp3"></audio>
+      <audio id="a9" src="./audios/09.mp3"></audio>
+      <audio id="a10" src="./audios/10.mp3"></audio>
+      <audio id="a11" src="./audios/11.mp3"></audio>
+      <audio id="a12" src="./audios/12.mp3"></audio>
+      <audio id="a13" src="./audios/13.mp3"></audio>
+      <audio id="a14" src="./audios/14.mp3"></audio>
+    </a-assets>
+
+
+    <a-entity light="color: #ffffff; type: ambient; castShadow: true; intensity: 1.2" data-aframe-default-light=""
+      aframe-injected="" visible=""></a-entity>
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    <!-- SINGLE ENTITY -->
+    <a-plane scale="4 6 1" id="showtarget" src="#target" visible="false" position="-0.5 1 -9" rotation="" material=""
+      geometry=""></a-plane>
+
+    <a-image scale="13 14 12" id="showreview" src="#review" visible="false" position="-0.5 -0 -9.2" rotation=""
+      material="" geometry=""></a-image>
+    <!-- <a-entity  position="0 -2 -8.5" scale="4 4 4" gltf-model="#m101" id="m1012"  ></a-entity> -->
+    <a-entity id="character" position="0.5 -2 -8" scale="3 3 3"> </a-entity>
+
+    <a-camera position="0 0 6" look-controls="enabled: false"></a-camera>
+  </a-scene>
+
+  <script>
+    const character = document.getElementById('character');
+
+    const sequence = [
+      { model: '#m1', audio: 'a1' },
+      { model: '#m2', audio: 'a2' },
+      { model: '#m3', audio: 'a3' },
+      { model: '#m4', audio: 'a4' },
+      { model: '#m5', audio: 'a5' },
+      { model: '#m6', audio: 'a6' },
+      { model: '#m7', audio: 'a7' },
+      { model: '#m8', audio: 'a8' },
+      { model: '#m9', audio: 'a9' },
+      { model: '#m10', audio: 'a10' },
+      { model: '#m11', audio: 'a11' },
+      { model: '#m12', audio: 'a12' },
+      { model: '#m13', audio: 'a13' },
+      { model: '#m14', audio: 'a14' }
+    ];
+
+    let index = 0;
+    let audioEl = null;
+
+    function playNext() {
+
+      if (index >= sequence.length) {
+        console.log("✅ ALL FINISHED");
+        return;
+      }
+
+      const { model, audio } = sequence[index];
+
+      // stop previous audio
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+      }
+
+      character.removeAttribute('animation-mixer');
+      character.removeAttribute('gltf-model');
+
+      setTimeout(() => {
+
+        character.setAttribute('gltf-model', model);
+
+        character.addEventListener('model-loaded', () => {
+
+          const mesh = character.getObject3D('mesh');
+
+          if (!mesh || !mesh.animations || mesh.animations.length === 0) {
+            console.warn("❌ No animation");
+            index++;
+            playNext();
+            return;
+          }
+
+          const clipName = mesh.animations[0].name;
+
+          // ▶️ play animation
+          character.setAttribute('animation-mixer', {
+            clip: clipName,
+            loop: 'once',
+            clampWhenFinished: true
+          });
+
+          // 🔊 play audio
+          audioEl = document.getElementById(audio);
+          audioEl.play();
+
+          // ⏭️ when animation finishes → next
+          character.addEventListener('animation-finished', () => {
+            index++;
+            playNext();
+          }, { once: true });
+
+        }, { once: true });
+
+      }, 50);
+    }
+
+    // 🚀 Start after first user tap (mobile audio policy)
+    document.body.addEventListener('click', () => {
+      playNext();
+    }, { once: true });
+
+  </script>
+
+
+
+  <!-- <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const character = document.getElementById('character');
+
+      const firstSequence = [
+        { model: '#m1', audio: 'a1' },
+        { model: '#m2', audio: 'a2' },
+        { model: '#m3', audio: 'a3' },
+        { model: '#m4', audio: 'a4' }
+
+
+      ];
+
+      const randomSequence = [
+        { model: '#m5', audio: 'a5' },
+        { model: '#m6', audio: 'a6' },
+        { model: '#m7', audio: 'a7' }
+      ];
+
+      const lastSequence = [
+        { model: '#m8', audio: 'a8' },
+        { model: '#m9', audio: 'a9' },
+        { model: '#m10', audio: 'a10' },
+        { model: '#m11', audio: 'a11' },
+        { model: '#m12', audio: 'a12' },
+        { model: '#m13', audio: 'a13' },
+        { model: '#m14', audio: 'a14' }
+      ];
+
+      let sequence = [];
+      let index = 0;
+      let audioEl = null;
+      let started = false;
+
+      //  Build FINAL sequence
+      function buildSequence() {
+
+        const randomPick =
+          randomSequence[Math.floor(Math.random() * randomSequence.length)];
+
+        sequence = [
+          ...firstSequence,
+          randomPick,        //  only one random animation
+          ...lastSequence
+        ];
+
+        console.log("🎲 RANDOM PICK:", randomPick.model);
+      }
+
+
+      function playNext() {
+
+        if (index >= sequence.length) {
+          console.log(" ALL FINISHED");
+          return;
+        }
+
+        const { model, audio } = sequence[index];
+
+        // stop previous audio
+        if (audioEl) {
+          audioEl.pause();
+          audioEl.currentTime = 0;
+        }
+
+        character.removeAttribute('animation-mixer');
+        character.removeAttribute('gltf-model');
+
+        setTimeout(() => {
+
+          character.setAttribute('gltf-model', model);
+
+          character.addEventListener('model-loaded', () => {
+
+            const mesh = character.getObject3D('mesh');
+
+            if (!mesh || !mesh.animations || mesh.animations.length === 0) {
+              console.warn("❌ No animation");
+              index++;
+              playNext();
+              return;
+            }
+
+            const clipName = mesh.animations[0].name;
+
+
+            character.setAttribute('animation-mixer', {
+              clip: clipName,
+              loop: 'once',
+              clampWhenFinished: true
+            });
+
+
+            audioEl = document.getElementById(audio);
+            audioEl.play();
+
+
+            character.addEventListener('animation-finished', () => {
+              index++;
+              playNext();
+            }, { once: true });
+
+          }, { once: true });
+
+        }, 50);
+      }
+
+
+      const m1012 = document.getElementById('m1012');
+      document.body.addEventListener('click', () => {
+        m1012.setAttribute('animation-mixer', 'clip: *; loop: once; clampWhenFinished: true');
+        m1012.setAttribute('frame-log', '')
+      });
+      const target = document.querySelector('[mindar-image-target]');
+      const overlay = document.querySelector('.mindar-ui-overlay');
+      const showtarget = document.getElementById('showtarget');
+      const showreview = document.getElementById('showreview');
+
+      // target.addEventListener('targetFound', ()=>{
+
+      //   if (started) return;   // ⭐ ONLY ONCE
+      //   started = true;
+
+      //   console.log("🎯 IMAGE TARGET TRIGGERED");
+      //   if (overlay)   overlay.style.display = 'none';
+      //   showtarget.setAttribute('visible', 'true');
+      //   showreview.setAttribute('visible', 'true');
+      //   target.removeAttribute('mindar-image-target');
+
+
+      // });
+      // });
+      // AFRAME.registerComponent('frame-log', {
+      //   tick: function (time, delta) {
+      //     console.log("⏱ frame:", time, "delta:", delta);
+      //     if (this.frameCount >= 3000 && !this.played) {
+      //       this.played = true;
+      //       buildSequence();
+      //       playNext();
+      //     }
+      //   }
+      // });
+      AFRAME.registerComponent('frame-log', {
+
+        init() {
+          this.frameCount = 0;
+          this.played = false;
+
+          this.targetEl = document.querySelector('[mindar-image-target]');
+        },
+
+        tick() {
+          this.frameCount++;
+          console.log("⏱ frame:", this.frameCount);
+          // ⭐ safer condition
+          if (this.frameCount >= 6 && !this.played) {
+            this.played = true;
+
+            console.log("🚀 1000 frames reached → start sequence");
+
+            if (this.targetEl) {
+              this.targetEl.removeAttribute('mindar-image-target');
+            }
+
+            // call global functions
+            if (typeof buildSequence === "function") buildSequence();
+            if (typeof playNext === "function") playNext();
+          }
+        }
+      });
+
+    });
+  </script> -->
+
+</body>
+
+</html>

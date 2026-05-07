@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>User Upload Model + Audio Sync</title>
+
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .ui {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: #000;
+            padding: 10px;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- UI -->
+    <div class="ui">
+        <input type="file" id="modelInput" accept=".glb,.gltf">model glb<br><br>
+        <input type="file" id="audioInput" accept="audio/*">audio mp3<br><br>
+        <button id="playBtn">PLAY</button>
+    </div>
+
+    <!-- AFRAME -->
+    <a-scene>
+        <a-entity id="character" position="0 -1 -2" scale="2 2 2"></a-entity>
+        <a-camera position="0 0 3"></a-camera>
+    </a-scene>
+
+    <script>
+        const modelInput = document.getElementById('modelInput');
+        const audioInput = document.getElementById('audioInput');
+        const playBtn = document.getElementById('playBtn');
+        const character = document.getElementById('character');
+
+        let modelURL = null;
+        let audioEl = new Audio();
+
+        // 📦 Handle model upload
+        modelInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            modelURL = URL.createObjectURL(file);
+            console.log("✅ Model loaded");
+        });
+
+        // 🔊 Handle audio upload
+        audioInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const audioURL = URL.createObjectURL(file);
+            audioEl.src = audioURL;
+            audioEl.load();
+
+            console.log("✅ Audio loaded");
+        });
+
+        // ▶️ Play sync
+        playBtn.addEventListener('click', () => {
+
+            if (!modelURL || !audioEl.src) {
+                alert("Upload both model and audio first");
+                return;
+            }
+
+            // reset
+            character.removeAttribute('gltf-model');
+            character.removeAttribute('animation-mixer');
+
+            setTimeout(() => {
+
+                character.setAttribute('gltf-model', modelURL);
+
+                character.addEventListener('model-loaded', () => {
+
+                    const mesh = character.getObject3D('mesh');
+
+                    if (!mesh || !mesh.animations || mesh.animations.length === 0) {
+                        console.warn("❌ No animation in model");
+                        return;
+                    }
+
+                    const clipName = mesh.animations[0].name;
+
+                    // 🔥 wait for audio ready
+                    audioEl.currentTime = 0;
+
+                    audioEl.oncanplaythrough = () => {
+
+                        // START BOTH SAME TIME
+                        character.setAttribute('animation-mixer', {
+                            clip: clipName,
+                            loop: 'once',
+                            clampWhenFinished: true
+                        });
+
+                        audioEl.play();
+                    };
+
+                }, { once: true });
+
+            }, 50);
+        });
+
+    </script>
+
+</body>
+
+</html>
